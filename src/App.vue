@@ -13,14 +13,27 @@
       </div>
     </div>
     <div class="container mx-auto max-w-5xl p-4 ">
-      <div class="flex flex-col-reverse font-mono gap-y-3">
-        <template v-for="(log, logIndex) in logs" :key="logIndex">
-          <div>
-            <div class="text-sm text-gray-400">{{ format(log.created.seconds * 1000, 'yyyy-MM-dd HH:mm:ss') }}</div>
-            <div class="text-sm whitespace-pre-line break-all">{{ JSON.stringify(log.body, null, '  ').replace(/ /g, '&nbsp;') }}</div>
-          </div>
-        </template>
-      </div>
+      <template v-if="!channel">
+        <div class="space-y-2 py-4">
+          <div class="text-center text-gray-400">선택된 채널이 없습니다. URL을 다시 한번 확인해주세요.</div>
+          <div class="text-center ">(예) https://notiflow.dist.be/?channel=abcdefg</div>
+        </div>
+      </template>
+      <template v-else-if="logs.length === 0">
+        <div class="space-y-2 py-4">
+          <div class="text-center text-gray-400">수신된 메시지 로그가 없습니다. URL을 다시 한번 확인해주세요.</div>
+        </div>
+      </template>
+      <template v-else>
+        <div class="flex flex-col-reverse font-mono gap-y-3">
+          <template v-for="(log, logIndex) in logs" :key="logIndex">
+            <div>
+              <div class="text-sm text-gray-400">{{ format(log.created.seconds * 1000, 'yyyy-MM-dd HH:mm:ss') }}</div>
+              <div class="text-sm whitespace-pre-line break-all">{{ JSON.stringify(log.body, null, '  ').replace(/ /g, '&nbsp;') }}</div>
+            </div>
+          </template>
+        </div>
+      </template>
     </div>
   </div>
 </template>
