@@ -1,11 +1,5 @@
 <template>
   <div class="container mx-auto">
-    <template v-if="state === 'CONNECTING'">
-      <div class="text-gray-500 text-sm">연결중입니다.</div>
-    </template>
-    <template v-else-if="state === 'DISCONNECTED'">
-      <div class="text-red-500 text-sm">연결이 끊어졌습니다.</div>
-    </template>
     <div class="flex flex-col-reverse">
       <template v-for="(message, messageIndex) in messages" :key="messageIndex">
         <div class="whitespace-pre">[POST] {{ message }}</div>
@@ -14,31 +8,29 @@
   </div>
 </template>
 <script setup lang="ts">
-import { onMounted, onUpdated, onUnmounted, ref } from 'vue'
+import { onUnmounted, ref } from 'vue'
+import { onSnapshot } from "firebase/firestore";
+import { collection, query, where } from "firebase/firestore";
+import { db } from "./modules/firebase"
 
 const messages = ref([] as string[])
-let state = ref('CONNECTING')
 
-onMounted(() => {
-  const events = new EventSource("https://notiflow-api.deno.dev/listen?channel=wan2land");
-  events.addEventListener("open", () => {
-    state.value = 'CONNECTED'
+const { searchParams } = new URL(location.href)
+const channel = searchParams.get('channel')
+
+if (channel) {
+  const q = query(collection(db, "logs"), where("channel", "==", channel));
+  const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    const datas = [] as string[];
+    querySnapshot.forEach((doc) => {
+      datas.push(doc.data().body);
+    });
+    console.log(datas)
+    messages.value = datas
   });
-  events.addEventListener("error", () => {
-    switch (events.readyState) {
-      case EventSource.OPEN:
-        state.value = 'CONNECTED'
-        break;
-      case EventSource.CONNECTING:
-        state.value = 'CONNECTING'
-        break;
-      case EventSource.CLOSED:
-        state.value = 'DISCONNECTED'
-        break;
-    }
-  });
-  events.addEventListener("message", (e) => {
-    messages.value.push(e.data);
-  });
-})
+
+  onUnmounted(() => {
+    unsubscribe()
+  })
+}
 </script>
